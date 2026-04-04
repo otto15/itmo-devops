@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Garage Management API
+  description: REST API for managing cars in a garage
+  version: 1.0.0
+
+paths:
+  /cars:
+    get:
+      tags: [Cars]
+      summary: List all cars
+      operationId: listCars
+      responses:
+        '200':
+          description: List of all cars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CarResponse'
+
+    post:
+      tags: [Cars]
+      summary: Add a car to the garage
+      operationId: createCar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarRequest'
+      responses:
+        '201':
+          description: Car successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarResponse'
+        '400':
+          description: Invalid request body
+
+  /cars/{id}:
+    get:
+      tags: [Cars]
+      summary: Get a car by ID
+      operationId: getCar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Car found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarResponse'
+        '404':
+          description: Car not found
+
+    put:
+      tags: [Cars]
+      summary: Update a car
+      operationId: updateCar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarRequest'
+      responses:
+        '200':
+          description: Car updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarResponse'
+        '400':
+          description: Invalid request body
+        '404':
+          description: Car not found
+
+    delete:
+      tags: [Cars]
+      summary: Remove a car from the garage
+      operationId: deleteCar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Car deleted
+        '404':
+          description: Car not found
+
+components:
+  schemas:
+    CarRequest:
+      type: object
+      required:
+        - brand
+        - model
+        - year
+        - color
+        - licensePlate
+      properties:
+        brand:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Toyota
+        model:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Corolla
+        year:
+          type: integer
+          minimum: 1886
+          maximum: 2100
+          example: 2020
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: White
+        licensePlate:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: '^[A-Z0-9]+$'
+          example: AB123CD
+
+    CarResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        brand:
+          type: string
+          example: Toyota
+        model:
+          type: string
+          example: Corolla
+        year:
+          type: integer
+          example: 2020
+        color:
+          type: string
+          example: White
+        licensePlate:
+          type: string
+          example: AB123CD
