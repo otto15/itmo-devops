@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from '../App'
 
-vi.mock('./api/client', () => ({
+vi.mock('../api/client', () => ({
   carsApi: {
     listCars: vi.fn(() => Promise.resolve({ data: [] })),
     createCar: vi.fn(),
