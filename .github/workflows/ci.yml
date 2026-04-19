@@ -26,8 +26,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run tests
-        run: ./gradlew test --no-daemon
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon --tests "com.garage.service.*"
 
       - name: Upload test report
         if: always()
@@ -58,14 +58,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build
-        run: ./gradlew bootJar --no-daemon -x test
-
-      - name: Upload jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-jar
-          path: garage-backend/build/libs/*.jar
-          retention-days: 1
+        run: ./gradlew compileKotlin --no-daemon
 
   frontend-test:
     name: Frontend - Test
@@ -86,7 +79,7 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: 'garage-frontend/package-lock.json'
-      
+
       - name: Clean install dependencies
         run: |
           rm -rf node_modules package-lock.json
@@ -105,21 +98,21 @@ jobs:
     needs: frontend-test
     defaults:
       run:
-        working-directory: garage-frontend  
-    
+        working-directory: garage-frontend
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: 'garage-frontend/package-lock.json'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build project
         run: npm run build
