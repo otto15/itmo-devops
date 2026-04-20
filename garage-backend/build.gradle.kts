@@ -21,7 +21,7 @@ repositories {
     mavenCentral()
 }
 
-val generatedDir = layout.buildDirectory.dir("generated").get().asFile.absolutePath
+val generatedDir = "$rootDir/generated"
 
 openApiGenerate {
     generatorName.set("kotlin-spring")
@@ -50,9 +50,6 @@ sourceSets {
     }
 }
 
-tasks.compileKotlin {
-    dependsOn(tasks.openApiGenerate)
-}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
