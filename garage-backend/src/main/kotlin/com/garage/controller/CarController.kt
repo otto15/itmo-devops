@@ -20,6 +20,7 @@ class CarController(
 
     override fun createCar(carRequest: CarRequest): ResponseEntity<CarResponse> {
         val created = carService.create(carMapper.toEntity(carRequest))
+
         return ResponseEntity.status(HttpStatus.CREATED).body(carMapper.toResponse(created))
     }
 
@@ -28,11 +29,13 @@ class CarController(
 
     override fun updateCar(id: Long, carRequest: CarRequest): ResponseEntity<CarResponse> {
         val updated = carService.update(id, carMapper.toEntity(carRequest))
+
         return ResponseEntity.ok(carMapper.toResponse(updated))
     }
 
     override fun deleteCar(id: Long): ResponseEntity<Unit> {
         carService.delete(id)
+
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 }
