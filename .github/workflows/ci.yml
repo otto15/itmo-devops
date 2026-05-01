@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   backend-test:
@@ -22,13 +22,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests
-        run: ./gradlew test --no-daemon --tests "com.garage.service.*"
+        run: ./gradlew test --tests "com.garage.service.*" --build-cache --parallel
 
       - name: Upload test report
         if: always()
@@ -54,13 +53,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        run: ./gradlew compileKotlin --no-daemon
+        run: ./gradlew compileKotlin --build-cache --parallel
 
   frontend-test:
     name: Frontend - Test
@@ -74,7 +72,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -87,7 +85,7 @@ jobs:
           rm -rf node_modules package-lock.json
           npm cache clean --force
           npm install --no-package-lock
-      
+
       - name: Run unit tests
         run: |
           npm run test:run
