@@ -1,0 +1,84 @@
+---
+- name: Install Docker
+  hosts: vm
+  become: true
+
+  pre_tasks:
+    - name: Wait for SSH
+      wait_for_connection:
+        delay: 10
+        timeout: 120
+
+  tasks:
+    - name: Install prerequisites
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      shell: |
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+      args:
+        creates: /etc/apt/keyrings/docker.asc
+
+    - name: Add Docker apt repository
+      shell: |
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+          https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        creates: /etc/apt/sources.list.d/docker.list
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add devops user to docker group
+      user:
+        name: devops
+        groups: docker
+        append: true
+
+- name: Deploy Garage
+  hosts: vm
+  become: true
+
+  tasks:
+    - name: Login to Yandex Container Registry
+      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
+      changed_when: false
+
+    - name: Copy docker-compose.yml
+      copy:
+        src: ../docker-compose.yml
+        dest: /home/devops/docker-compose.yml
+        owner: devops
+        mode: '0644'
+
+    - name: Pull images
+      shell: docker compose -f /home/devops/docker-compose.yml pull
+      changed_when: false
+
+    - name: Start services
+      shell: docker compose -f /home/devops/docker-compose.yml up -d
