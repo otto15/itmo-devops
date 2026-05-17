@@ -1,0 +1,42 @@
+---
+- name: Install and deploy monitoring tools
+  hosts: vm
+
+  pre_tasks:
+    - name: Wait for SSH
+      wait_for_connection:
+        delay: 10
+        timeout: 120
+  tasks:
+    - name: Add the Helm GPG Key
+      become: true
+      shell: |
+        curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+
+    - name: Add Helm apt repository
+      become: true
+      shell: |
+        echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+
+    - name: Update apt cache
+      become: true
+      shell:
+        cmd: apt-get update
+
+    - name: Install Helm
+      become: true
+      shell:
+        cmd: apt-get install helm
+    
+    - name: Add Prometheus Helm repo
+      command: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  
+
+    - name: Update Helm repos
+      command: helm repo update
+    
+    - name: Install Prometheus stack
+      command: |
+        helm install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring --create-namespace \
+          --set grafana.service.type=NodePort \
+          --set prometheus.service.type=NodePort  

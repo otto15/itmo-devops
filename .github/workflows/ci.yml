@@ -60,6 +60,28 @@ jobs:
       - name: Build
         run: ./gradlew compileKotlin --build-cache --parallel
 
+  backend-docker:
+    name: Backend - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: backend-build
+    defaults:
+      run:
+        working-directory: garage-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_KEY }}" | docker login cr.yandex --username json_key --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest -t cr.yandex/crp73fh09ihdevr61ugo/garage-backend:${{ github.sha }} .
+
+      - name: Push Docker images
+        run: |
+          docker push cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
+          docker push cr.yandex/crp73fh09ihdevr61ugo/garage-backend:${{ github.sha }}
+
   frontend-test:
     name: Frontend - Test
     runs-on: ubuntu-latest
@@ -116,3 +138,25 @@ jobs:
 
       - name: Build project
         run: npm run build
+
+  frontend-docker:
+    name: Frontent - Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: frontend-build
+    defaults:
+      run:
+        working-directory: garage-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_KEY }}" | docker login cr.yandex --username json_key --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:${{ github.sha }} .
+
+      - name: Push Docker images
+        run: |
+          docker push cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+          docker push cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:${{ github.sha }}

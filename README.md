@@ -107,6 +107,18 @@ export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)
 ```
 
+Для работы terraform в России настроить зеркало яндекса, скопировав в ~/.terraformrc следующие строки:
+provider_installation {
+  network_mirror {
+    url = "https://terraform-mirror.yandexcloud.net/"
+    include = ["registry.terraform.io/*/*"]
+  }
+  direct {
+    exclude = ["registry.terraform.io/*/*"]
+  }
+}
+
+
 ### Команды
 
 ```bash
@@ -180,3 +192,19 @@ ansible-playbook playbook.yml
 ```bash
 ssh -i ~/.ssh/id_ed25519_dev_ops devops@<external_ip> docker compose ps
 ```
+Запуск деплоя на удаленную машину
+ansible-playbook -i ansible/inventory.ini ansible/playbook-monitoring.yml --ask-become-pass
+ansible-playbook -i ansible/inventory.ini ansible/playbook-deploy.yml -e "yc_token=$YC_TOKEN"
+ansible-playbook -i ansible/inventory.ini ansible/playbook-install.yml --ask-become-pass
+
+
+Чтобы запустить jmeter (нужна 8 версия java)
+sudo apt-get install openjdk-8-jre 
+
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 jmeter
+
+
+Сбросить пароль от графаны
+devops@devops:~$ kubectl get pods -n monitoring | grep grafana
+monitoring-grafana-7f594f7d5-bm5bs                       3/3     Running   0          27m
+devops@devops:~$ kubectl exec -it -n monitoring monitoring-grafana-7f594f7d5-bm5bs -- grafana cli admin reset-admin-password admin
