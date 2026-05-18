@@ -1,0 +1,9 @@
+#cloud-config
+users:
+  - name: devops
+    groups: sudo
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh_authorized_keys:
+      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWNQ1JIVUDBrZlgvqSyowmqg5QqN5Gx2Go4nTtTma7 Key for dev ops labs'
+      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILHfc3AVdR+dSsFn6O/RCygaDEWOCEJXs3xCgFCW+IXU shalnevtimofey@gmail.com'

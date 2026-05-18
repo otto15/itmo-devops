@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: garage
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80

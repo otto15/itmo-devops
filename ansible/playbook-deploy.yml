@@ -1,0 +1,99 @@
+---
+- name: Start Minikube and deploy Garage
+  hosts: vm
+  become: false
+
+  tasks:
+    - name: Delete old Minikube cluster
+      become_user: devops
+      shell: minikube delete
+      ignore_errors: true
+
+    - name: Start Minikube
+      become_user: devops
+      shell: minikube start --driver=docker
+
+    - name: Enable metrics-server (for HPA)
+      become_user: devops
+      shell: minikube addons enable metrics-server
+
+    - name: Login to Yandex Container Registry (Docker)
+      become_user: devops
+      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
+
+    - name: Pull backend image
+      become_user: devops
+      shell: docker pull cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
+
+    - name: Pull frontend image
+      become_user: devops
+      shell: docker pull cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+
+    - name: Load backend image into Minikube
+      become_user: devops
+      shell: minikube image load cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
+
+    - name: Load frontend image into Minikube
+      become_user: devops
+      shell: minikube image load cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+
+    - name: Create k8s directories on remote
+      file:
+        path: "/home/devops/k8s/{{ item }}"
+        state: directory
+        owner: devops
+      loop:
+        - database
+        - backend
+        - frontend
+
+    - name: Copy Kubernetes manifests
+      copy:
+        src: "{{ playbook_dir }}/../k8s/"
+        dest: "/home/devops/k8s/"
+        owner: devops
+
+    - name: Apply database
+      become_user: devops
+      shell: minikube kubectl -- apply -f /home/devops/k8s/database/ --validate=false
+
+    - name: Wait for database
+      become_user: devops
+      shell: minikube kubectl -- wait --for=condition=ready pod -l app=db --timeout=120s
+
+    - name: Apply backend
+      become_user: devops
+      shell: minikube kubectl -- apply -f /home/devops/k8s/backend/ --validate=false
+
+    - name: Apply frontend
+      become_user: devops
+      shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/ --validate=false
+
+    - name: Get pods status
+      become_user: devops
+      shell: minikube kubectl -- get pods
+      register: pods
+
+    - name: Get services
+      become_user: devops
+      shell: minikube kubectl -- get svc
+      register: svc
+
+    - name: Deployment summary
+      debug:
+        msg:
+          - "============================================="
+          - "DEPLOYMENT COMPLETE"
+          - ""
+          - "Pods:"
+          - "{{ pods.stdout_lines }}"
+          - ""
+          - "Services:"
+          - "{{ svc.stdout_lines }}"
+          - ""
+          - "Useful commands on VPS:"
+          - "  kubectl get pods -w          # Watch pods"
+          - "  kubectl get hpa -w           # Watch autoscaling"
+          - "  kubectl logs deploy/backend  # Backend logs"
+          - "  minikube dashboard           # Web UI"
+          - "============================================="
