@@ -1,11 +1,14 @@
-# IntelliJ IDEA
-.idea/
-
 # OS
 .DS_Store
 Thumbs.db
 
+# IntelliJ IDEA
+.idea/
+*.iml
+
 # Logs
 *.log
 
-*.iml
+# Ansible — generated and secrets
+ansible/inventory.ini
+ansible/cr_token

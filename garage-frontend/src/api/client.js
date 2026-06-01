@@ -2,7 +2,7 @@ import ApiClient from './generated/src/ApiClient';
 import CarsApi from './generated/src/api/CarsApi';
 
 const apiClient = new ApiClient();
-apiClient.basePath = 'http://localhost:8080';
+apiClient.basePath = import.meta.env.VITE_API_URL || '';
 apiClient.defaultHeaders = {
   'Content-Type': 'application/json',
 };

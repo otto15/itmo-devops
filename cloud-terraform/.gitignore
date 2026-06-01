@@ -1,0 +1,9 @@
+# Terraform state — contains sensitive infrastructure data
+terraform.tfstate
+terraform.tfstate.backup
+
+# Provider cache
+.terraform/
+
+# OS
+.DS_Store
