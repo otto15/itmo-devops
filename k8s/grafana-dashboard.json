@@ -1,0 +1,69 @@
+{
+  "title": "Backend HPA Scaling",
+  "uid": "backend-hpa",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Replicas",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
+          "legendFormat": "current replicas",
+          "refId": "A"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_status_desired_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
+          "legendFormat": "desired replicas",
+          "refId": "B"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_spec_min_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
+          "legendFormat": "min replicas",
+          "refId": "C"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
+          "legendFormat": "max replicas",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2 },
+          "min": 0
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "CPU Usage vs Threshold",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{pod=~\"backend-.*\", container=\"backend\"}[1m]) * 100",
+          "legendFormat": "cpu usage % — {{pod}}",
+          "refId": "A"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_spec_target_metric{horizontalpodautoscaler=\"backend-hpa\", metric_name=\"cpu\"} or vector(15)",
+          "legendFormat": "scale threshold (15%)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": { "lineWidth": 2 },
+          "min": 0
+        }
+      }
+    }
+  ],
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "5s"
+}

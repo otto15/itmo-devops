@@ -53,6 +53,48 @@
         dest: "/home/devops/k8s/"
         owner: devops
 
+    - name: Add Prometheus Helm repo
+      become_user: devops
+      shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+    - name: Update Helm repos
+      become_user: devops
+      shell: helm repo update
+
+    - name: Install Prometheus stack
+      become_user: devops
+      shell: |
+        helm install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring --create-namespace \
+          --set grafana.service.type=NodePort \
+          --set prometheus.service.type=NodePort \
+          --kubeconfig /home/devops/.kube/config
+
+    - name: Wait for Prometheus CRDs
+      become_user: devops
+      shell: minikube kubectl -- wait --for=condition=established crd/servicemonitors.monitoring.coreos.com --timeout=120s
+
+    - name: Copy Grafana dashboard JSON
+      copy:
+        src: "{{ playbook_dir }}/../k8s/grafana-dashboard.json"
+        dest: "/home/devops/k8s/grafana-dashboard.json"
+        owner: devops
+
+    - name: Create Grafana dashboard ConfigMap
+      become_user: devops
+      shell: |
+        minikube kubectl -- create configmap backend-hpa-dashboard \
+          --from-file=backend-hpa.json=/home/devops/k8s/grafana-dashboard.json \
+          --namespace monitoring \
+          --dry-run=client -o yaml | \
+        minikube kubectl -- apply -f -
+
+    - name: Label ConfigMap for Grafana sidecar
+      become_user: devops
+      shell: |
+        minikube kubectl -- label configmap backend-hpa-dashboard \
+          grafana_dashboard=1 --namespace monitoring --overwrite
+
     - name: Apply database
       become_user: devops
       shell: minikube kubectl -- apply -f /home/devops/k8s/database/ --validate=false
