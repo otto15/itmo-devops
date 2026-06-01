@@ -143,7 +143,7 @@ echo $YC_TOKEN | docker login cr.yandex --username iam --password-stdin
 
 ```bash
 docker build --platform linux/amd64 -t cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest ./garage-backend
-docker build --platform linux/amd64 -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest ./garage-frontend
+docker build --platform linux/amd64 -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest -f ./garage-frontend/Dockerfile .
 
 docker push cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
 docker push cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest

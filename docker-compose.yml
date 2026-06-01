@@ -12,7 +12,6 @@ services:
       retries: 10
 
   backend:
-    build: ./garage-backend
     image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -20,9 +19,6 @@ services:
       db:
         condition: service_healthy
   frontend:
-    build:
-      context: .
-      dockerfile: garage-frontend/Dockerfile
     image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
     ports:
-      - "8888:80"
+      - "80:80"
