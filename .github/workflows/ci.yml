@@ -158,7 +158,8 @@ jobs:
           cat /tmp/key.json | docker login cr.yandex --username json_key --password-stdin
 
       - name: Build Docker image
-        run: docker build -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:${{ github.sha }} .
+        working-directory: .
+        run: docker build -f garage-frontend/Dockerfile -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest -t cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:${{ github.sha }} .
 
       - name: Push Docker images
         run: |

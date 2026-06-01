@@ -10,28 +10,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - garage-net
 
   backend:
+    build: ./garage-backend
     image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - garage-net
-
   frontend:
+    build:
+      context: .
+      dockerfile: garage-frontend/Dockerfile
     image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
     ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - garage-net
-
-networks:
-  garage-net:
-    driver: bridge
+      - "8888:80"
