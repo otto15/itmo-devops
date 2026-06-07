@@ -10,9 +10,9 @@ spec:
     matchLabels:
       app: backend
   endpoints:
-  - port: backend
-    path: /metrics
-    interval: 2s
+    - port: http
+      path: /actuator/prometheus
+      interval: 5s
   namespaceSelector:
     matchNames:
-    - default
+      - garage-app

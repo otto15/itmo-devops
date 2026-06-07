@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: backend-hpa
+  namespace: garage-app
   labels:
     app: garage
     tier: backend
@@ -11,7 +12,7 @@ spec:
     kind: Deployment
     name: backend
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 5
   metrics:
     - type: Resource
       resource:
@@ -19,3 +20,16 @@ spec:
         target:
           type: Utilization
           averageUtilization: 15
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30

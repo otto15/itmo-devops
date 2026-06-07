@@ -1,0 +1,15 @@
+[Unit]
+Description=Garage LAN port-forwards (Grafana, Prometheus, frontend, backend)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=devops
+ExecStart=/usr/local/bin/garage-portforward.sh
+Restart=always
+RestartSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

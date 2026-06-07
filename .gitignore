@@ -12,3 +12,8 @@ Thumbs.db
 # Ansible — generated and secrets
 ansible/inventory.ini
 ansible/cr_token
+
+# Cloud / secrets
+key.json
+*.tfstate
+*.tfstate.backup

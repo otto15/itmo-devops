@@ -77,3 +77,43 @@
         dest: /usr/local/bin/minikube
         mode: '0755'
 
+    - name: Add Helm GPG key
+      shell: |
+        curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null
+      args:
+        creates: /usr/share/keyrings/helm.gpg
+
+    - name: Add Helm apt repository
+      shell: |
+        echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+      args:
+        creates: /etc/apt/sources.list.d/helm-stable-debian.list
+
+    - name: Update apt cache (helm repo)
+      apt:
+        update_cache: true
+
+    - name: Install Helm
+      apt:
+        name: helm
+        state: present
+
+    # Ubuntu's guided LVM install leaves the root LV at ~half the volume group.
+    # The k8s + monitoring stack needs the space, so grow the root LV/FS to use
+    # all free extents (no-op if nothing is free). Assumes the default
+    # ubuntu-vg/ubuntu-lv naming.
+    - name: Grow root LV to use all free VG space
+      shell: |
+        set -e
+        free=$(vgs --noheadings -o vg_free --units b ubuntu-vg 2>/dev/null | tr -dc 0-9)
+        if [ -n "$free" ] && [ "$free" -gt 0 ]; then
+          lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+          resize2fs /dev/ubuntu-vg/ubuntu-lv
+          echo grown
+        else
+          echo nothing-to-grow
+        fi
+      register: lv_grow
+      changed_when: "'grown' in lv_grow.stdout"
+      failed_when: false
+

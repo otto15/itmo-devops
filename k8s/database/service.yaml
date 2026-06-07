@@ -1,18 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: db
+  namespace: garage-app
   labels:
     app: garage
-    tier: backend
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/actuator/prometheus"
+    tier: database
 spec:
-  type: ClusterIP
+  # Headless service: gives the StatefulSet stable DNS (db, db-0.db) and lets
+  # the backend connect via jdbc:postgresql://db:5432/garage.
+  clusterIP: None
   selector:
-    app: backend
+    app: db
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 5432
+      targetPort: 5432

@@ -2,40 +2,49 @@
 - name: Start Minikube and deploy Garage
   hosts: vm
   become: false
+  vars:
+    registry: cr.yandex/crp73fh09ihdevr61ugo
+    kubeconfig: /home/devops/.kube/config
 
   tasks:
     - name: Delete old Minikube cluster
-      become_user: devops
       shell: minikube delete
       ignore_errors: true
 
+    # 4096MB to the cluster leaves ~700MB for the guest OS + dockerd on the 5GiB VM.
     - name: Start Minikube
-      become_user: devops
-      shell: minikube start --driver=docker
+      shell: minikube start --driver=docker --cpus=4 --memory=4096
 
     - name: Enable metrics-server (for HPA)
-      become_user: devops
       shell: minikube addons enable metrics-server
 
+    # Retries guard against transient TLS/network flakes reaching cr.yandex.
     - name: Login to Yandex Container Registry (Docker)
-      become_user: devops
-      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
+      shell: echo "{{ yc_token }}" | docker login cr.yandex --username iam --password-stdin
+      register: login_result
+      until: login_result.rc == 0
+      retries: 5
+      delay: 10
 
     - name: Pull backend image
-      become_user: devops
-      shell: docker pull cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
+      shell: docker pull {{ registry }}/garage-backend:latest
+      register: pull_backend
+      until: pull_backend.rc == 0
+      retries: 5
+      delay: 10
 
     - name: Pull frontend image
-      become_user: devops
-      shell: docker pull cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+      shell: docker pull {{ registry }}/garage-frontend:latest
+      register: pull_frontend
+      until: pull_frontend.rc == 0
+      retries: 5
+      delay: 10
 
     - name: Load backend image into Minikube
-      become_user: devops
-      shell: minikube image load cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
+      shell: minikube image load {{ registry }}/garage-backend:latest
 
     - name: Load frontend image into Minikube
-      become_user: devops
-      shell: minikube image load cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
+      shell: minikube image load {{ registry }}/garage-frontend:latest
 
     - name: Create k8s directories on remote
       file:
@@ -54,24 +63,35 @@
         owner: devops
 
     - name: Add Prometheus Helm repo
-      become_user: devops
       shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
     - name: Update Helm repos
-      become_user: devops
       shell: helm repo update
 
-    - name: Install Prometheus stack
-      become_user: devops
+    # Right-sized for a 5GiB VM: alertmanager off, low retention, memory caps.
+    # Both Grafana sidecars stay enabled (default) so the Prometheus datasource
+    # AND our dashboard ConfigMap are auto-provisioned.
+    - name: Install/upgrade Prometheus stack
       shell: |
-        helm install monitoring prometheus-community/kube-prometheus-stack \
+        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
           --namespace monitoring --create-namespace \
+          --kubeconfig {{ kubeconfig }} \
+          --set alertmanager.enabled=false \
           --set grafana.service.type=NodePort \
+          --set grafana.adminPassword=admin \
+          --set grafana.image.tag=11.3.0 \
+          --set grafana.resources.requests.memory=200Mi \
+          --set grafana.resources.limits.memory=384Mi \
           --set prometheus.service.type=NodePort \
-          --kubeconfig /home/devops/.kube/config
+          --set prometheus.prometheusSpec.retention=2h \
+          --set prometheus.prometheusSpec.resources.requests.memory=300Mi \
+          --set prometheus.prometheusSpec.resources.limits.memory=750Mi \
+          --set prometheus.prometheusSpec.scrapeInterval=15s \
+          --set prometheus-node-exporter.resources.limits.memory=64Mi \
+          --set kube-state-metrics.resources.limits.memory=128Mi \
+          --wait --timeout 10m
 
-    - name: Wait for Prometheus CRDs
-      become_user: devops
+    - name: Wait for Prometheus ServiceMonitor CRD
       shell: minikube kubectl -- wait --for=condition=established crd/servicemonitors.monitoring.coreos.com --timeout=120s
 
     - name: Copy Grafana dashboard JSON
@@ -81,7 +101,6 @@
         owner: devops
 
     - name: Create Grafana dashboard ConfigMap
-      become_user: devops
       shell: |
         minikube kubectl -- create configmap backend-hpa-dashboard \
           --from-file=backend-hpa.json=/home/devops/k8s/grafana-dashboard.json \
@@ -90,36 +109,63 @@
         minikube kubectl -- apply -f -
 
     - name: Label ConfigMap for Grafana sidecar
-      become_user: devops
       shell: |
         minikube kubectl -- label configmap backend-hpa-dashboard \
           grafana_dashboard=1 --namespace monitoring --overwrite
 
+    - name: Create application namespace (garage-app)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/namespace.yaml
+
     - name: Apply database
-      become_user: devops
-      shell: minikube kubectl -- apply -f /home/devops/k8s/database/ --validate=false
+      shell: minikube kubectl -- apply -f /home/devops/k8s/database/
 
     - name: Wait for database
-      become_user: devops
-      shell: minikube kubectl -- wait --for=condition=ready pod -l app=db --timeout=120s
+      shell: minikube kubectl -- wait --for=condition=ready pod -l app=db -n garage-app --timeout=300s
 
-    - name: Apply backend
-      become_user: devops
-      shell: minikube kubectl -- apply -f /home/devops/k8s/backend/ --validate=false
+    - name: Apply backend (deployment, service, hpa, ServiceMonitor)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/backend/
 
     - name: Apply frontend
-      become_user: devops
-      shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/ --validate=false
+      shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/
+
+    - name: Wait for backend rollout
+      shell: minikube kubectl -- rollout status deploy/backend -n garage-app --timeout=300s
+
+    - name: Wait for frontend rollout
+      shell: minikube kubectl -- rollout status deploy/frontend -n garage-app --timeout=180s
+
+    # --- LAN access via systemd-managed port-forward ---
+    - name: Install port-forward script
+      become: true
+      tags: portforward
+      copy:
+        src: "{{ playbook_dir }}/files/garage-portforward.sh"
+        dest: /usr/local/bin/garage-portforward.sh
+        mode: "0755"
+
+    - name: Install port-forward systemd unit
+      become: true
+      tags: portforward
+      copy:
+        src: "{{ playbook_dir }}/files/garage-portforward.service"
+        dest: /etc/systemd/system/garage-portforward.service
+
+    - name: Enable and (re)start port-forward service
+      become: true
+      tags: portforward
+      systemd:
+        name: garage-portforward
+        enabled: true
+        state: restarted
+        daemon_reload: true
 
     - name: Get pods status
-      become_user: devops
-      shell: minikube kubectl -- get pods
+      shell: minikube kubectl -- get pods -A
       register: pods
 
-    - name: Get services
-      become_user: devops
-      shell: minikube kubectl -- get svc
-      register: svc
+    - name: Get HPA status
+      shell: minikube kubectl -- get hpa -n garage-app
+      register: hpa
 
     - name: Deployment summary
       debug:
@@ -130,12 +176,12 @@
           - "Pods:"
           - "{{ pods.stdout_lines }}"
           - ""
-          - "Services:"
-          - "{{ svc.stdout_lines }}"
+          - "HPA:"
+          - "{{ hpa.stdout_lines }}"
           - ""
-          - "Useful commands on VPS:"
-          - "  kubectl get pods -w          # Watch pods"
-          - "  kubectl get hpa -w           # Watch autoscaling"
-          - "  kubectl logs deploy/backend  # Backend logs"
-          - "  minikube dashboard           # Web UI"
+          - "LAN access (from any host on the network):"
+          - "  Frontend:    http://{{ inventory_hostname }}:8080"
+          - "  Backend API: http://{{ inventory_hostname }}:8081/cars"
+          - "  Grafana:     http://{{ inventory_hostname }}:3000  (admin/admin)"
+          - "  Prometheus:  http://{{ inventory_hostname }}:9090"
           - "============================================="
