@@ -297,6 +297,12 @@ HPA: `minReplicas: 1`, `maxReplicas: 5`, `averageUtilization: 15` (% от CPU re
 > Это не бенчмарк: на одном узле (4 CPU) приложение + мониторинг делят ресурсы, поэтому
 > абсолютные времена ответа не репрезентативны — цель демонстрации в реакции HPA.
 
+**Если после долгой нагрузки сервисы на `:8080/:8081` перестали отвечать** — это `kubectl
+port-forward` (он не рассчитан на тяжёлый трафик). Лечится перезапуском:
+`sudo systemctl restart garage-portforward` на VM. `GET /cars` отдаёт всю таблицу без
+пагинации, поэтому после write-нагрузки она разбухает — очистить:
+`kubectl exec -n garage-app db-0 -- psql -U garage -d garage -c "TRUNCATE cars RESTART IDENTITY;"`
+
 ### 5. Мониторинг (Grafana + Prometheus)
 
 Бэкенд отдаёт метрики на `/actuator/prometheus` (Spring Boot Actuator + Micrometer,

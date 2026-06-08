@@ -63,7 +63,8 @@ jobs:
   backend-docker:
     name: Backend - Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: backend-build
+    # push only after ALL tests (backend + frontend) pass
+    needs: [backend-test, frontend-test]
     defaults:
       run:
         working-directory: garage-backend
@@ -144,7 +145,8 @@ jobs:
   frontend-docker:
     name: Frontent - Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: frontend-build
+    # push only after ALL tests (backend + frontend) pass
+    needs: [backend-test, frontend-test]
     defaults:
       run:
         working-directory: garage-frontend

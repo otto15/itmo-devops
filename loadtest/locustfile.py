@@ -13,10 +13,13 @@ class GarageUser(HttpUser):
     # small think-time between requests
     wait_time = between(0.05, 0.2)
 
-    @task(8)
+    @task(20)
     def list_cars(self):
         self.client.get("/cars", name="GET /cars")
 
+    # Low weight on purpose: GET /cars returns the whole table (no pagination),
+    # so a write-heavy test bloats the response and chokes the kubectl
+    # port-forward. Keep writes rare; truncate the table if /cars grows big.
     @task(1)
     def create_car(self):
         self.client.post(
