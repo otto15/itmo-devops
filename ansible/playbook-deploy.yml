@@ -129,10 +129,10 @@
       shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/
 
     - name: Wait for backend rollout
-      shell: minikube kubectl -- rollout status deploy/backend -n garage-app --timeout=300s
+      shell: minikube kubectl -- rollout status deploy/garage-app-backend -n garage-app --timeout=300s
 
     - name: Wait for frontend rollout
-      shell: minikube kubectl -- rollout status deploy/frontend -n garage-app --timeout=180s
+      shell: minikube kubectl -- rollout status deploy/garage-app-frontend -n garage-app --timeout=180s
 
     # --- LAN access via systemd-managed port-forward ---
     - name: Install port-forward script

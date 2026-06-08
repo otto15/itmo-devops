@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: garage-app-backend
   namespace: garage-app
   labels:
     app: garage

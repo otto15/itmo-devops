@@ -591,6 +591,44 @@
       }
     },
     {
+      "id": 13,
+      "title": "Ошибки 5xx по подам (req/s)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 24,
+        "h": 6
+      },
+      "description": "Частота ответов 5xx по подам.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod) (rate(http_server_requests_seconds_count{application=\"garage-backend\", status=~\"5..\"}[1m]))",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 103,
       "title": "garage_app — автомасштабирование (HPA, порог 15% CPU)",
       "type": "row",
@@ -689,7 +727,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"garage-app\", pod=~\"backend-.*\"}[1m])) / 0.2 * 100",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"garage-app\", pod=~\"garage-app-backend-.*\"}[1m])) / 0.2 * 100",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
