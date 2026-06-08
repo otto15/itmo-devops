@@ -62,56 +62,25 @@
         dest: "/home/devops/k8s/"
         owner: devops
 
-    - name: Add Prometheus Helm repo
-      shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    # --- Monitoring: plain manifests, no Helm (Prometheus + Grafana) ---
+    - name: Create monitoring namespace
+      shell: minikube kubectl -- create namespace monitoring --dry-run=client -o yaml | minikube kubectl -- apply -f -
 
-    - name: Update Helm repos
-      shell: helm repo update
-
-    # Right-sized for a 5GiB VM: alertmanager off, low retention, memory caps.
-    # Both Grafana sidecars stay enabled (default) so the Prometheus datasource
-    # AND our dashboard ConfigMap are auto-provisioned.
-    - name: Install/upgrade Prometheus stack
+    - name: Create Grafana dashboard ConfigMap (mounted into Grafana)
       shell: |
-        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-          --namespace monitoring --create-namespace \
-          --kubeconfig {{ kubeconfig }} \
-          --set alertmanager.enabled=false \
-          --set grafana.service.type=NodePort \
-          --set grafana.adminPassword=admin \
-          --set grafana.image.tag=11.3.0 \
-          --set grafana.resources.requests.memory=200Mi \
-          --set grafana.resources.limits.memory=384Mi \
-          --set prometheus.service.type=NodePort \
-          --set prometheus.prometheusSpec.retention=2h \
-          --set prometheus.prometheusSpec.resources.requests.memory=300Mi \
-          --set prometheus.prometheusSpec.resources.limits.memory=750Mi \
-          --set prometheus.prometheusSpec.scrapeInterval=15s \
-          --set prometheus-node-exporter.resources.limits.memory=64Mi \
-          --set kube-state-metrics.resources.limits.memory=128Mi \
-          --wait --timeout 10m
-
-    - name: Wait for Prometheus ServiceMonitor CRD
-      shell: minikube kubectl -- wait --for=condition=established crd/servicemonitors.monitoring.coreos.com --timeout=120s
-
-    - name: Copy Grafana dashboard JSON
-      copy:
-        src: "{{ playbook_dir }}/../k8s/grafana-dashboard.json"
-        dest: "/home/devops/k8s/grafana-dashboard.json"
-        owner: devops
-
-    - name: Create Grafana dashboard ConfigMap
-      shell: |
-        minikube kubectl -- create configmap backend-hpa-dashboard \
-          --from-file=backend-hpa.json=/home/devops/k8s/grafana-dashboard.json \
+        minikube kubectl -- create configmap grafana-dashboard \
+          --from-file=garage.json=/home/devops/k8s/grafana-dashboard.json \
           --namespace monitoring \
-          --dry-run=client -o yaml | \
-        minikube kubectl -- apply -f -
+          --dry-run=client -o yaml | minikube kubectl -- apply -f -
 
-    - name: Label ConfigMap for Grafana sidecar
-      shell: |
-        minikube kubectl -- label configmap backend-hpa-dashboard \
-          grafana_dashboard=1 --namespace monitoring --overwrite
+    - name: Deploy Prometheus + Grafana (manifests)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/monitoring/
+
+    - name: Wait for Prometheus rollout
+      shell: minikube kubectl -- rollout status deploy/prometheus -n monitoring --timeout=180s
+
+    - name: Wait for Grafana rollout
+      shell: minikube kubectl -- rollout status deploy/grafana -n monitoring --timeout=180s
 
     - name: Create application namespace (garage-app)
       shell: minikube kubectl -- apply -f /home/devops/k8s/namespace.yaml

@@ -21,9 +21,9 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(kube_pod_info, namespace)",
+        "definition": "label_values(container_cpu_usage_seconds_total, namespace)",
         "query": {
-          "query": "label_values(kube_pod_info, namespace)",
+          "query": "label_values(container_cpu_usage_seconds_total, namespace)",
           "refId": "ns"
         },
         "refresh": 2,
@@ -42,9 +42,9 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(kube_pod_info{namespace=\"$namespace\"}, pod)",
+        "definition": "label_values(container_cpu_usage_seconds_total{namespace=\"$namespace\"}, pod)",
         "query": {
-          "query": "label_values(kube_pod_info{namespace=\"$namespace\"}, pod)",
+          "query": "label_values(container_cpu_usage_seconds_total{namespace=\"$namespace\"}, pod)",
           "refId": "pod"
         },
         "refresh": 2,
@@ -60,8 +60,8 @@
   },
   "panels": [
     {
-      "id": 100,
-      "title": "System — системные ресурсы (узел и поды)",
+      "id": 99,
+      "title": "Обзор",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -73,9 +73,9 @@
       "panels": []
     },
     {
-      "id": 1,
-      "title": "CPU узла, %",
-      "type": "timeseries",
+      "id": 20,
+      "title": "Реплики backend (инстансы)",
+      "type": "stat",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -83,70 +83,53 @@
       "gridPos": {
         "x": 0,
         "y": 1,
-        "w": 12,
-        "h": 7
+        "w": 24,
+        "h": 5
       },
-      "description": "Суммарная загрузка CPU узла minikube (node-exporter).",
+      "description": "Текущее число запущенных backend-подов (по числу скрейп-таргетов).",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))) * 100",
-          "legendFormat": "node CPU %",
+          "expr": "count(up{job=\"backend\"})",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 8
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
           }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
         },
-        "overrides": []
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center"
       }
     },
     {
-      "id": 2,
-      "title": "Память узла, %",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "id": 100,
+      "title": "System — системные ресурсы (по подам)",
+      "type": "row",
+      "collapsed": false,
       "gridPos": {
-        "x": 12,
-        "y": 1,
-        "w": 12,
-        "h": 7
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 1
       },
-      "description": "Использование памяти узла.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
-          "legendFormat": "node mem %",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 8
-          }
-        },
-        "overrides": []
-      }
+      "panels": []
     },
     {
       "id": 3,
@@ -158,11 +141,11 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 7,
         "w": 12,
         "h": 8
       },
-      "description": "Нагрузка по CPU на каждый под выбранного namespace.",
+      "description": "Нагрузка по CPU на каждый под выбранного namespace (cAdvisor).",
       "targets": [
         {
           "datasource": {
@@ -196,7 +179,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 8,
+        "y": 7,
         "w": 12,
         "h": 8
       },
@@ -231,7 +214,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 15,
         "w": 24,
         "h": 1
       },
@@ -247,7 +230,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 16,
         "w": 12,
         "h": 7
       },
@@ -285,7 +268,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 17,
+        "y": 16,
         "w": 12,
         "h": 7
       },
@@ -332,7 +315,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 23,
         "w": 12,
         "h": 6
       },
@@ -370,7 +353,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 24,
+        "y": 23,
         "w": 12,
         "h": 6
       },
@@ -405,7 +388,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 29,
         "w": 24,
         "h": 1
       },
@@ -421,7 +404,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 31,
+        "y": 30,
         "w": 12,
         "h": 8
       },
@@ -459,7 +442,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 31,
+        "y": 30,
         "w": 12,
         "h": 8
       },
@@ -497,7 +480,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 38,
         "w": 12,
         "h": 8
       },
@@ -562,7 +545,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 39,
+        "y": 38,
         "w": 12,
         "h": 8
       },
@@ -591,8 +574,21 @@
       }
     },
     {
-      "id": 13,
-      "title": "Ошибки 5xx по подам (req/s)",
+      "id": 103,
+      "title": "garage_app — автомасштабирование (HPA, порог 15% CPU)",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
+      "title": "Реплики backend (во времени)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -601,97 +597,19 @@
       "gridPos": {
         "x": 0,
         "y": 47,
-        "w": 24,
-        "h": 6
-      },
-      "description": "Частота ответов 5xx по подам.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (pod) (rate(http_server_requests_seconds_count{application=\"garage-backend\", status=~\"5..\"}[1m]))",
-          "legendFormat": "{{pod}}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 8
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 103,
-      "title": "garage_app — автомасштабирование (HPA, порог 15% CPU)",
-      "type": "row",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 53,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 14,
-      "title": "Реплики backend (HPA)",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 54,
         "w": 12,
         "h": 8
       },
-      "description": "Текущее/желаемое/min/max число реплик backend.",
+      "description": "Число backend-подов во времени (рост при масштабировании HPA 1→5).",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
-          "legendFormat": "current",
+          "expr": "count(up{job=\"backend\"})",
+          "legendFormat": "реплики backend",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "kube_horizontalpodautoscaler_status_desired_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
-          "legendFormat": "desired",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "kube_horizontalpodautoscaler_spec_min_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
-          "legendFormat": "min",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{horizontalpodautoscaler=\"backend-hpa\"}",
-          "legendFormat": "max",
-          "refId": "D"
         }
       ],
       "fieldConfig": {
@@ -716,7 +634,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 54,
+        "y": 47,
         "w": 12,
         "h": 8
       },
