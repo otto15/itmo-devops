@@ -146,12 +146,24 @@ jobs:
         working-directory: garage-backend
         run: ./gradlew test jacocoTestReport --build-cache --parallel
 
-      - name: Run SonarCloud analysis
-        working-directory: garage-backend
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar
-          -Dsonar.javascript.lcov.reportPaths=../garage-frontend/coverage/lcov.info
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=otto15
+            -Dsonar.projectKey=otto15_itmo-devops
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=garage-backend/src/main/kotlin,garage-frontend/src
+            -Dsonar.tests=garage-backend/src/test/kotlin
+            -Dsonar.coverage.jacoco.xmlReportPaths=garage-backend/build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.javascript.lcov.reportPaths=garage-frontend/coverage/lcov.info
+            -Dsonar.exclusions=**/generated/**
+            -Dsonar.coverage.exclusions=**/generated/**
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=600
 
   docker-publish:
     name: Docker - Publish to YCR (${{ matrix.image }})

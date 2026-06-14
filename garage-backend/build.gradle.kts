@@ -8,7 +8,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.6"
     id("org.openapi.generator") version "7.8.0"
     id("jacoco")
-    id("org.sonarqube") version "6.0.1.5171"
 }
 
 group = "com.garage"
@@ -102,15 +101,3 @@ tasks.jacocoTestReport {
     }
 }
 
-sonar {
-    properties {
-        property("sonar.projectKey", "otto15_itmo-devops")
-        property("sonar.organization", "otto15")
-        property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.sources", "src/main/kotlin")
-        property("sonar.tests", "src/test/kotlin")
-        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
-        property("sonar.exclusions", "**/generated/**")
-        property("sonar.coverage.exclusions", "**/generated/**")
-    }
-}
