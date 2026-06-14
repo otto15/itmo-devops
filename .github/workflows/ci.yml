@@ -25,8 +25,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
-        run: ./gradlew test --tests "com.garage.service.*" --build-cache --parallel
+      - name: Run unit tests with coverage
+        run: ./gradlew test --tests "com.garage.service.*" jacocoTestReport copyDependencies --build-cache --parallel
 
       - name: Upload test report
         if: always()
@@ -35,6 +35,16 @@ jobs:
           name: backend-test-report
           path: garage-backend/build/reports/tests/test/
           retention-days: 7
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco
+          path: |
+            garage-backend/build/reports/jacoco/
+            garage-backend/build/classes/
+            garage-backend/build/dependency/
+          retention-days: 1
 
   backend-build:
     name: Backend - Build
@@ -81,10 +91,17 @@ jobs:
           npm cache clean --force
           npm install --no-package-lock
 
-      - name: Run unit tests
-        run: npm run test:run
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
         env:
           CI: true
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: garage-frontend/coverage/
+          retention-days: 1
 
   frontend-build:
     name: Frontend - Build
@@ -118,44 +135,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - name: Download JaCoCo report
+        uses: actions/download-artifact@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          name: backend-jacoco
+          path: garage-backend/build/
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'garage-frontend/package-lock.json'
-
-      - name: Install frontend dependencies
-        working-directory: garage-frontend
-        run: npm ci
-
-      - name: Run frontend coverage
-        working-directory: garage-frontend
-        run: npm run test:coverage
-
-      - name: Run backend tests with coverage
-        working-directory: garage-backend
-        run: ./gradlew test jacocoTestReport copyDependencies --build-cache --parallel
-
-      - name: Debug coverage files
-        run: |
-          echo "=== JaCoCo classes in XML ==="
-          grep -o 'name="[^"]*"' garage-backend/build/reports/jacoco/test/jacocoTestReport.xml | head -20 || echo "NOT FOUND"
-          echo "=== JaCoCo line count ==="
-          grep -c "<line " garage-backend/build/reports/jacoco/test/jacocoTestReport.xml || echo "0"
-          echo "=== lcov covered lines ==="
-          grep -c "^DA:" garage-frontend/coverage/lcov.info || echo "0"
-          echo "=== lcov SF paths ==="
-          grep "^SF:" garage-frontend/coverage/lcov.info || echo "NOT FOUND"
+          name: frontend-coverage
+          path: garage-frontend/coverage/
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
