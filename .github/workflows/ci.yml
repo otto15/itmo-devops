@@ -148,16 +148,14 @@ jobs:
 
       - name: Debug coverage files
         run: |
-          echo "=== JaCoCo ==="
-          find garage-backend/build/reports/jacoco -type f 2>/dev/null || echo "NOT FOUND"
-          echo "=== Classes ==="
-          find garage-backend/build/classes -type f -name "*.class" 2>/dev/null | head -5 || echo "NOT FOUND"
-          echo "=== Dependencies ==="
-          find garage-backend/build/dependency -type f 2>/dev/null | head -5 || echo "NOT FOUND"
-          echo "=== lcov ==="
-          find garage-frontend/coverage -type f 2>/dev/null || echo "NOT FOUND"
-          echo "=== lcov content (first 10 lines) ==="
-          head -10 garage-frontend/coverage/lcov.info 2>/dev/null || echo "NOT FOUND"
+          echo "=== JaCoCo classes in XML ==="
+          grep -o 'name="[^"]*"' garage-backend/build/reports/jacoco/test/jacocoTestReport.xml | head -20 || echo "NOT FOUND"
+          echo "=== JaCoCo line count ==="
+          grep -c "<line " garage-backend/build/reports/jacoco/test/jacocoTestReport.xml || echo "0"
+          echo "=== lcov covered lines ==="
+          grep -c "^DA:" garage-frontend/coverage/lcov.info || echo "0"
+          echo "=== lcov SF paths ==="
+          grep "^SF:" garage-frontend/coverage/lcov.info || echo "NOT FOUND"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
