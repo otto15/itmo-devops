@@ -1,0 +1,155 @@
+---
+- name: Start Minikube and deploy Garage
+  hosts: vm
+  become: false
+  vars:
+    registry: cr.yandex/crp73fh09ihdevr61ugo
+    kubeconfig: /home/devops/.kube/config
+
+  tasks:
+    - name: Delete old Minikube cluster
+      shell: minikube delete
+      ignore_errors: true
+
+    - name: Start Minikube
+      shell: minikube start --driver=docker --cpus=2 --memory=1800
+
+    - name: Enable metrics-server (for HPA)
+      shell: minikube addons enable metrics-server
+
+    # Retries guard against transient TLS/network flakes reaching cr.yandex.
+    - name: Login to Yandex Container Registry (Docker)
+      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
+      register: login_result
+      until: login_result.rc == 0
+      retries: 5
+      delay: 10
+
+    - name: Pull backend image
+      shell: docker pull {{ registry }}/garage-backend:latest
+      register: pull_backend
+      until: pull_backend.rc == 0
+      retries: 5
+      delay: 10
+
+    - name: Pull frontend image
+      shell: docker pull {{ registry }}/garage-frontend:latest
+      register: pull_frontend
+      until: pull_frontend.rc == 0
+      retries: 5
+      delay: 10
+
+    - name: Load backend image into Minikube
+      shell: minikube image load {{ registry }}/garage-backend:latest
+
+    - name: Load frontend image into Minikube
+      shell: minikube image load {{ registry }}/garage-frontend:latest
+
+    - name: Create k8s directories on remote
+      file:
+        path: "/home/devops/k8s/{{ item }}"
+        state: directory
+        owner: devops
+      loop:
+        - database
+        - backend
+        - frontend
+
+    - name: Copy Kubernetes manifests
+      copy:
+        src: "{{ playbook_dir }}/../k8s/"
+        dest: "/home/devops/k8s/"
+        owner: devops
+
+    # --- Monitoring: plain manifests, no Helm (Prometheus + Grafana) ---
+    - name: Create monitoring namespace
+      shell: minikube kubectl -- create namespace monitoring --dry-run=client -o yaml | minikube kubectl -- apply -f -
+
+    - name: Create Grafana dashboard ConfigMap (mounted into Grafana)
+      shell: |
+        minikube kubectl -- create configmap grafana-dashboard \
+          --from-file=garage.json=/home/devops/k8s/grafana-dashboard.json \
+          --namespace monitoring \
+          --dry-run=client -o yaml | minikube kubectl -- apply -f -
+
+    - name: Deploy Prometheus + Grafana (manifests)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/monitoring/
+
+    - name: Wait for Prometheus rollout
+      shell: minikube kubectl -- rollout status deploy/prometheus -n monitoring --timeout=180s
+
+    - name: Wait for Grafana rollout
+      shell: minikube kubectl -- rollout status deploy/grafana -n monitoring --timeout=180s
+
+    - name: Create application namespace (garage-app)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/namespace.yaml
+
+    - name: Apply database
+      shell: minikube kubectl -- apply -f /home/devops/k8s/database/
+
+    - name: Wait for database
+      shell: minikube kubectl -- rollout status statefulset/db -n garage-app --timeout=300s
+
+    - name: Apply backend (deployment, service, hpa, ServiceMonitor)
+      shell: minikube kubectl -- apply -f /home/devops/k8s/backend/
+
+    - name: Apply frontend
+      shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/
+
+    - name: Wait for backend rollout
+      shell: minikube kubectl -- rollout status deploy/garage-app-backend -n garage-app --timeout=300s
+
+    - name: Wait for frontend rollout
+      shell: minikube kubectl -- rollout status deploy/garage-app-frontend -n garage-app --timeout=180s
+
+    # --- LAN access via systemd-managed port-forward ---
+    - name: Install port-forward script
+      become: true
+      tags: portforward
+      copy:
+        src: "{{ playbook_dir }}/files/garage-portforward.sh"
+        dest: /usr/local/bin/garage-portforward.sh
+        mode: "0755"
+
+    - name: Install port-forward systemd unit
+      become: true
+      tags: portforward
+      copy:
+        src: "{{ playbook_dir }}/files/garage-portforward.service"
+        dest: /etc/systemd/system/garage-portforward.service
+
+    - name: Enable and (re)start port-forward service
+      become: true
+      tags: portforward
+      systemd:
+        name: garage-portforward
+        enabled: true
+        state: restarted
+        daemon_reload: true
+
+    - name: Get pods status
+      shell: minikube kubectl -- get pods -A
+      register: pods
+
+    - name: Get HPA status
+      shell: minikube kubectl -- get hpa -n garage-app
+      register: hpa
+
+    - name: Deployment summary
+      debug:
+        msg:
+          - "============================================="
+          - "DEPLOYMENT COMPLETE"
+          - ""
+          - "Pods:"
+          - "{{ pods.stdout_lines }}"
+          - ""
+          - "HPA:"
+          - "{{ hpa.stdout_lines }}"
+          - ""
+          - "LAN access (from any host on the network):"
+          - "  Frontend:    http://{{ inventory_hostname }}"
+          - "  Backend API: http://{{ inventory_hostname }}:8081/cars"
+          - "  Grafana:     http://{{ inventory_hostname }}:3000  (admin/admin)"
+          - "  Prometheus:  http://{{ inventory_hostname }}:9090"
+          - "============================================="

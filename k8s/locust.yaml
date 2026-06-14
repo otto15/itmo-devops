@@ -1,0 +1,110 @@
+# Locust load generator with a web UI — the load scenario is saved here (in git),
+# and on the defense you just open the UI and press the "Start" button.
+#
+#   kubectl apply -f k8s/locust.yaml
+#   open  http://<VM_IP>:8089   (fields are pre-filled: 200 users, 20/s) -> press Start
+#   kubectl delete -f k8s/locust.yaml     # stop
+#
+# Locust hammers the backend Service; CPU crosses the 15% HPA target and new
+# backend pods are created — watch it live on the Grafana "Garage" dashboard.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: locust-script
+  namespace: garage-app
+  labels:
+    app: locust
+data:
+  locustfile.py: |
+    import random
+    import string
+    from locust import HttpUser, task, between
+
+    def _plate():
+        letters = ''.join(random.choices(string.ascii_uppercase, k=3))
+        return f"{letters}{random.randint(100, 999)}"
+
+    class GarageUser(HttpUser):
+        # think-time between requests
+        wait_time = between(0.05, 0.2)
+
+        @task(8)
+        def list_cars(self):
+            self.client.get("/cars", name="GET /cars")
+
+        @task(1)
+        def create_car(self):
+            self.client.post(
+                "/cars",
+                name="POST /cars",
+                json={
+                    "brand": random.choice(["Lada", "Toyota", "BMW", "Kia"]),
+                    "model": random.choice(["Vesta", "Corolla", "X5", "Rio"]),
+                    "year": random.randint(2000, 2024),
+                    "color": random.choice(["White", "Black", "Red", "Blue"]),
+                    "licensePlate": _plate(),
+                },
+            )
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+  namespace: garage-app
+  labels:
+    app: locust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+        - name: locust
+          image: locustio/locust:2.31.8
+          args:
+            - -f
+            - /mnt/locust/locustfile.py
+            - --host
+            - http://backend:8080
+            - --users
+            - "200"
+            - --spawn-rate
+            - "20"
+          ports:
+            - name: web
+              containerPort: 8089
+          volumeMounts:
+            - name: script
+              mountPath: /mnt/locust
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+      volumes:
+        - name: script
+          configMap:
+            name: locust-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust
+  namespace: garage-app
+  labels:
+    app: locust
+spec:
+  type: ClusterIP
+  selector:
+    app: locust
+  ports:
+    - name: web
+      port: 8089
+      targetPort: 8089
