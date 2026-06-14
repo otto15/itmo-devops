@@ -13,5 +13,13 @@ export default defineConfig({
       '**/coverage/**',
     ],
     setupFiles: ['./src/test/setup.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcov'],
+      exclude: [
+        '**/node_modules/**',
+        '**/src/api/generated/**',
+      ],
+    },
   },
 })
