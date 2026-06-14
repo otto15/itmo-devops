@@ -415,8 +415,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (uri) (rate(http_server_requests_seconds_count{application=\"garage-backend\"}[1m]))",
-          "legendFormat": "{{uri}}",
+          "expr": "sum by (method, uri) (rate(http_server_requests_seconds_count{application=\"garage-backend\"}[1m]))",
+          "legendFormat": "{{method}} {{uri}}",
           "refId": "A"
         }
       ],
@@ -453,8 +453,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod, uri) (rate(http_server_requests_seconds_count{application=\"garage-backend\"}[1m]))",
-          "legendFormat": "{{pod}} {{uri}}",
+          "expr": "sum by (pod, method, uri) (rate(http_server_requests_seconds_count{application=\"garage-backend\"}[1m]))",
+          "legendFormat": "{{pod}} {{method}} {{uri}}",
           "refId": "A"
         }
       ],

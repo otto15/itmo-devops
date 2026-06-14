@@ -77,26 +77,13 @@
         dest: /usr/local/bin/minikube
         mode: '0755'
 
-    - name: Add Helm GPG key
-      shell: |
-        curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null
-      args:
-        creates: /usr/share/keyrings/helm.gpg
-
-    - name: Add Helm apt repository
-      shell: |
-        echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
-      args:
-        creates: /etc/apt/sources.list.d/helm-stable-debian.list
-
-    - name: Update apt cache (helm repo)
-      apt:
-        update_cache: true
-
-    - name: Install Helm
-      apt:
-        name: helm
+    - name: Allow unprivileged bind to port 80+ (for kubectl port-forward as devops)
+      sysctl:
+        name: net.ipv4.ip_unprivileged_port_start
+        value: '80'
         state: present
+        sysctl_file: /etc/sysctl.d/99-unprivileged-ports.conf
+        reload: true
 
     # Ubuntu's guided LVM install leaves the root LV at ~half the volume group.
     # The k8s + monitoring stack needs the space, so grow the root LV/FS to use

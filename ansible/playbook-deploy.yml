@@ -11,16 +11,15 @@
       shell: minikube delete
       ignore_errors: true
 
-    # 4096MB to the cluster leaves ~700MB for the guest OS + dockerd on the 5GiB VM.
     - name: Start Minikube
-      shell: minikube start --driver=docker --cpus=4 --memory=4096
+      shell: minikube start --driver=docker --cpus=2 --memory=1800
 
     - name: Enable metrics-server (for HPA)
       shell: minikube addons enable metrics-server
 
     # Retries guard against transient TLS/network flakes reaching cr.yandex.
     - name: Login to Yandex Container Registry (Docker)
-      shell: echo "{{ yc_token }}" | docker login cr.yandex --username iam --password-stdin
+      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
       register: login_result
       until: login_result.rc == 0
       retries: 5
@@ -89,7 +88,7 @@
       shell: minikube kubectl -- apply -f /home/devops/k8s/database/
 
     - name: Wait for database
-      shell: minikube kubectl -- wait --for=condition=ready pod -l app=db -n garage-app --timeout=300s
+      shell: minikube kubectl -- rollout status statefulset/db -n garage-app --timeout=300s
 
     - name: Apply backend (deployment, service, hpa, ServiceMonitor)
       shell: minikube kubectl -- apply -f /home/devops/k8s/backend/
@@ -149,7 +148,7 @@
           - "{{ hpa.stdout_lines }}"
           - ""
           - "LAN access (from any host on the network):"
-          - "  Frontend:    http://{{ inventory_hostname }}:8080"
+          - "  Frontend:    http://{{ inventory_hostname }}"
           - "  Backend API: http://{{ inventory_hostname }}:8081/cars"
           - "  Grafana:     http://{{ inventory_hostname }}:3000  (admin/admin)"
           - "  Prometheus:  http://{{ inventory_hostname }}:9090"

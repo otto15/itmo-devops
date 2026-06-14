@@ -17,3 +17,5 @@ ansible/cr_token
 key.json
 *.tfstate
 *.tfstate.backup
+
+.history/

@@ -29,6 +29,13 @@ spec:
               value: garage
           ports:
             - containerPort: 5432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "garage", "-d", "garage"]

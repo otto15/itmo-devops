@@ -33,9 +33,9 @@ spec:
           resources:
             requests:
               cpu: "100m"
-              memory: "300Mi"
+              memory: "200Mi"
             limits:
-              memory: "700Mi"
+              memory: "400Mi"
       volumes:
         - name: config
           configMap:

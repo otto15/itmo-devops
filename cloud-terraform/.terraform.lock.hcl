@@ -2,15 +2,15 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/hashicorp/local" {
-  version = "2.8.0"
+  version = "2.9.0"
   hashes = [
-    "h1:KCuj8nPbNP/ofQrAoQIuQ3CP6k+ADpULvxr7dw2PrpM=",
+    "h1:m24fjcInWvTVZ1XSo2MaNuKPe+X/gfG8SIi09rA7a7M=",
   ]
 }
 
 provider "registry.terraform.io/yandex-cloud/yandex" {
-  version = "0.201.0"
+  version = "0.206.0"
   hashes = [
-    "h1:safB+s77I4wpuvIbwfS4utDeIksPAwIIE8jyBERMFlI=",
+    "h1:ycGIj9DPxJuZT58bJpBS2HgZGNOj2X2w9AnrzfyRI6g=",
   ]
 }
