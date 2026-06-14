@@ -89,6 +89,11 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+tasks.register<Copy>("copyDependencies") {
+    from(configurations.runtimeClasspath)
+    into("build/dependency")
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)

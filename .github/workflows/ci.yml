@@ -144,7 +144,7 @@ jobs:
 
       - name: Run backend tests with coverage
         working-directory: garage-backend
-        run: ./gradlew test jacocoTestReport --build-cache --parallel
+        run: ./gradlew test jacocoTestReport copyDependencies --build-cache --parallel
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
@@ -156,12 +156,6 @@ jobs:
             -Dsonar.organization=otto15
             -Dsonar.projectKey=otto15_itmo-devops
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.sources=garage-backend/src/main/kotlin,garage-frontend/src
-            -Dsonar.tests=garage-backend/src/test/kotlin
-            -Dsonar.coverage.jacoco.xmlReportPaths=garage-backend/build/reports/jacoco/test/jacocoTestReport.xml
-            -Dsonar.javascript.lcov.reportPaths=garage-frontend/coverage/lcov.info
-            -Dsonar.exclusions=**/generated/**
-            -Dsonar.coverage.exclusions=**/generated/**
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=600
 
