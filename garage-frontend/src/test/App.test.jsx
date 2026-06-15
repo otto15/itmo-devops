@@ -86,4 +86,104 @@ describe('App', () => {
     })
   })
 
+  it('populates form when edit button is clicked', async () => {
+    const user = userEvent.setup()
+    const mockCars = [
+      { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' }
+    ]
+    carsApi.listCars.mockResolvedValue({ data: mockCars })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /Edit/i }))
+
+    expect(screen.getByDisplayValue('Toyota')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Camry')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Update Car/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+  })
+
+  it('updates car when update form is submitted', async () => {
+    const user = userEvent.setup()
+    const mockCars = [
+      { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' }
+    ]
+    carsApi.listCars.mockResolvedValue({ data: mockCars })
+    carsApi.updateCar.mockResolvedValueOnce({ data: {} })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /Edit/i }))
+    await user.click(screen.getByRole('button', { name: /Update Car/i }))
+
+    expect(carsApi.updateCar).toHaveBeenCalledWith(1, expect.any(Object))
+  })
+
+  it('cancels editing when cancel button is clicked', async () => {
+    const user = userEvent.setup()
+    const mockCars = [
+      { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' }
+    ]
+    carsApi.listCars.mockResolvedValue({ data: mockCars })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /Edit/i }))
+    expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Cancel/i }))
+    expect(screen.getByRole('button', { name: /Add Car/i })).toBeInTheDocument()
+  })
+
+  it('deletes car when confirmed', async () => {
+    const user = userEvent.setup()
+    const mockCars = [
+      { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' }
+    ]
+    carsApi.listCars.mockResolvedValue({ data: mockCars })
+    carsApi.deleteCar.mockResolvedValueOnce({})
+    global.confirm.mockReturnValue(true)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }))
+
+    expect(carsApi.deleteCar).toHaveBeenCalledWith(1)
+  })
+
+  it('does not delete car when confirmation is cancelled', async () => {
+    const user = userEvent.setup()
+    const mockCars = [
+      { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' }
+    ]
+    carsApi.listCars.mockResolvedValue({ data: mockCars })
+    global.confirm.mockReturnValue(false)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }))
+
+    expect(carsApi.deleteCar).not.toHaveBeenCalled()
+  })
+
 })
