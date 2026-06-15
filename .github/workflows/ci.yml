@@ -25,8 +25,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
-        run: ./gradlew test --tests "com.garage.service.*" --build-cache --parallel
+      - name: Run unit tests with coverage
+        run: ./gradlew test jacocoTestReport copyDependencies --build-cache --parallel
 
       - name: Upload test report
         if: always()
@@ -35,6 +35,16 @@ jobs:
           name: backend-test-report
           path: garage-backend/build/reports/tests/test/
           retention-days: 7
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco
+          path: |
+            garage-backend/build/reports/jacoco/
+            garage-backend/build/classes/
+            garage-backend/build/dependency/
+          retention-days: 1
 
   backend-build:
     name: Backend - Build
@@ -81,10 +91,17 @@ jobs:
           npm cache clean --force
           npm install --no-package-lock
 
-      - name: Run unit tests
-        run: npm run test:run
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
         env:
           CI: true
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: garage-frontend/coverage/
+          retention-days: 1
 
   frontend-build:
     name: Frontend - Build
@@ -109,10 +126,44 @@ jobs:
       - name: Build project
         run: npm run build
 
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download JaCoCo report
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jacoco
+          path: garage-backend/build/
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: garage-frontend/coverage/
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=otto15
+            -Dsonar.projectKey=otto15_itmo-devops
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=600
+
   docker-publish:
     name: Docker - Publish to YCR (${{ matrix.image }})
     runs-on: ubuntu-latest
-    needs: frontend-build
+    needs: [frontend-build, sonar]
     strategy:
       fail-fast: false
       matrix:

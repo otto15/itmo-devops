@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.garage.generated.model.CarRequest
 import com.garage.repository.CarRepository
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -22,12 +23,15 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Duration
 
+@Tag("integration")
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
 class CarControllerIntegrationTest {
 
     companion object {
+        private const val NON_EXISTENT_ID = "/cars/99999"
+
         @Container
         val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
             withDatabaseName("garage_test")
@@ -119,7 +123,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `GET cars by id - returns 404 when not found`() {
-        mockMvc.get("/cars/99999").andExpect {
+        mockMvc.get(NON_EXISTENT_ID).andExpect {
             status { isNotFound() }
         }
     }
@@ -143,7 +147,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `PUT cars by id - returns 404 when car does not exist`() {
-        mockMvc.put("/cars/99999") {
+        mockMvc.put(NON_EXISTENT_ID) {
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(carRequest())
         }.andExpect {
@@ -166,7 +170,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `DELETE cars by id - returns 404 when car does not exist`() {
-        mockMvc.delete("/cars/99999").andExpect {
+        mockMvc.delete(NON_EXISTENT_ID).andExpect {
             status { isNotFound() }
         }
     }

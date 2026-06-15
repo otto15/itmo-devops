@@ -7,6 +7,7 @@ plugins {
     id("org.springframework.boot") version "3.3.4"
     id("io.spring.dependency-management") version "1.1.6"
     id("org.openapi.generator") version "7.8.0"
+    id("jacoco")
 }
 
 group = "com.garage"
@@ -88,6 +89,22 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+tasks.register<Copy>("copyDependencies") {
+    from(configurations.runtimeClasspath)
+    into("build/dependency")
 }
+
+tasks.withType<Test> {
+    useJUnitPlatform {
+        excludeTags("integration")
+    }
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.withType<Test>())
+    reports {
+        xml.required.set(true)
+    }
+}
+

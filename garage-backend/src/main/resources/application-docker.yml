@@ -1,5 +1,5 @@
 spring:
   datasource:
     url: jdbc:postgresql://db:5432/garage
-    username: garage
-    password: garage
+    username: ${DB_USERNAME:garage}
+    password: ${DB_PASSWORD:garage}

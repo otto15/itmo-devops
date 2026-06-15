@@ -16,6 +16,7 @@ spec:
       labels:
         app: frontend
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: frontend
           image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
@@ -26,6 +27,7 @@ spec:
             requests:
               cpu: "50m"
               memory: "64Mi"
+              ephemeral-storage: "64Mi"
             limits:
               cpu: "200m"
               memory: "128Mi"

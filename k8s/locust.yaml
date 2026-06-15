@@ -63,6 +63,7 @@ spec:
       labels:
         app: locust
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: locust
           image: locustio/locust:2.31.8
@@ -85,6 +86,7 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
+              ephemeral-storage: "64Mi"
             limits:
               cpu: "500m"
               memory: "256Mi"

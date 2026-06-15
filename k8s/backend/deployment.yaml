@@ -20,6 +20,7 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/actuator/prometheus"
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: backend
           image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
@@ -40,6 +41,7 @@ spec:
             requests:
               cpu: "200m"
               memory: "320Mi"
+              ephemeral-storage: "128Mi"
             limits:
               cpu: "1000m"
               memory: "768Mi"
