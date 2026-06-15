@@ -51,6 +51,7 @@ spec:
 
   orphanedResources:
     warn: true
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
