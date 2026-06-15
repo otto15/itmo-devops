@@ -245,8 +245,20 @@ docker push cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
 docker push cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:latest
 ```
 
-> В CI публикация образов вынесена в отдельные job'ы `backend-docker` / `frontend-docker`
-> (см. `.github/workflows/ci.yml`) — образы пушатся в cr.yandex по тегам `latest` и `${{ github.sha }}`.
+> В CI (`.github/workflows/ci.yml`) пайплайн линейный: `Backend - Test → Backend - Build →
+> Frontend - Test → Frontend - Build → Docker - Publish to YCR` (matrix-job на оба образа,
+> теги `latest` и `${{ github.sha }}`). Публикация идёт только после всех тестов.
+
+#### Уведомления в Telegram о статусе CI/CD
+
+Финальный job `notify` (`if: always()`, зависит от всех job'ов) шлёт в Telegram сводку со
+статусом каждого job'а (✅/❌/⏭️/⚪) и ссылкой на run. Нужны два секрета в репозитории
+(*Settings → Secrets and variables → Actions*):
+
+| Secret | Откуда взять |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | создать бота у [@BotFather](https://t.me/BotFather) → команда `/newbot` → токен вида `123456:ABC...` |
+| `TELEGRAM_CHAT_ID`   | написать боту любое сообщение, затем `curl https://api.telegram.org/bot<TOKEN>/getUpdates` → `chat.id` (для личного чата) или id группы |
 
 ### 2. Деплой кластера и приложения
 
