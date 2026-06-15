@@ -21,10 +21,11 @@ spec:
         prometheus.io/path: "/actuator/prometheus"
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ycr-secret
       containers:
         - name: backend
           image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:latest
-          imagePullPolicy: IfNotPresent
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: docker
