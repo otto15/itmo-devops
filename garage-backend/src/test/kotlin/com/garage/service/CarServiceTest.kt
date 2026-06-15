@@ -115,4 +115,14 @@ class CarServiceTest {
 
         assertThrows<CarNotFoundException> { carService.delete(99L) }
     }
+
+    @Test
+    fun `count returns number of cars in repository`() {
+        every { carRepository.count() } returns 5L
+
+        val result = carService.count()
+
+        assertEquals(5L, result)
+        verify(exactly = 1) { carRepository.count() }
+    }
 }
