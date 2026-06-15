@@ -5,9 +5,9 @@
 set -euo pipefail
 
 
-msg=$(printf '*CI/CD* — %s\nВетка: %s • событие: %s\n\n%s Backend - Test\n%s Backend - Build\n%s Frontend - Test\n%s Frontend - Build\n%s Docker - Publish to YCR\n\n🔗 %s' \
+msg=$(printf '*CI/CD* — %s\nВетка: %s • событие: %s\n\n%s Backend - Test\n%s Backend - Build\n%s Frontend - Test\n%s Frontend - Build\n%s Docker - Publish to YCR\n\n %s' \
   "$REPO" "$REF" "$EVENT" \
-  "$($BT)" "$($BB)" "$($FT)" "$($FB)" "$($DP)" \
+  "$BT" "$BB" "$FT" "$FB" "$DP" \
   "$RUN_URL")
 
 curl -sS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
