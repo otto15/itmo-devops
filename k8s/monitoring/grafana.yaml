@@ -48,6 +48,7 @@ spec:
       labels:
         app: grafana
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: grafana
           image: grafana/grafana:11.3.0
@@ -67,7 +68,9 @@ spec:
               mountPath: /var/lib/grafana/dashboards
           resources:
             requests:
+              cpu: "50m"
               memory: "200Mi"
+              ephemeral-storage: "64Mi"
             limits:
               memory: "384Mi"
       volumes:

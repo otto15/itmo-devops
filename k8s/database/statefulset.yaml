@@ -17,6 +17,7 @@ spec:
       labels:
         app: db
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: postgres
           image: postgres:16
@@ -33,9 +34,11 @@ spec:
             requests:
               cpu: "100m"
               memory: "256Mi"
+              ephemeral-storage: "256Mi"
             limits:
               cpu: "500m"
               memory: "512Mi"
+              ephemeral-storage: "512Mi"
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "garage", "-d", "garage"]

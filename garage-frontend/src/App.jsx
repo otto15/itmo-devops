@@ -87,8 +87,9 @@ function App() {
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
-                <label>Brand *</label>
+                <label htmlFor="brand">Brand *</label>
                 <input
+                  id="brand"
                   type="text"
                   value={formData.brand}
                   onChange={(e) => setFormData({...formData, brand: e.target.value})}
@@ -98,8 +99,9 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>Model *</label>
+                <label htmlFor="model">Model *</label>
                 <input
+                  id="model"
                   type="text"
                   value={formData.model}
                   onChange={(e) => setFormData({...formData, model: e.target.value})}
@@ -111,11 +113,12 @@ function App() {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Year *</label>
+                <label htmlFor="year">Year *</label>
                 <input
+                  id="year"
                   type="number"
                   value={formData.year}
-                  onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({...formData, year: Number.parseInt(e.target.value)})}
                   required
                   min="1886"
                   max="2100"
@@ -123,8 +126,9 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>Color *</label>
+                <label htmlFor="color">Color *</label>
                 <input
+                  id="color"
                   type="text"
                   value={formData.color}
                   onChange={(e) => setFormData({...formData, color: e.target.value})}
@@ -135,8 +139,9 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label>License Plate *</label>
+              <label htmlFor="licensePlate">License Plate *</label>
               <input
+                id="licensePlate"
                 type="text"
                 value={formData.licensePlate}
                 onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})}
@@ -165,14 +170,15 @@ function App() {
         <div className="card list-card">
           <h2>📋 My Cars ({cars.length})</h2>
           
-          {loading ? (
-            <div className="loading">Loading cars...</div>
-          ) : cars.length === 0 ? (
-            <div className="empty-state">
-              <p>🚗 No cars in the garage yet.</p>
-              <p>Add your first car using the form above!</p>
-            </div>
-          ) : (
+          {(() => {
+            if (loading) return <div className="loading">Loading cars...</div>;
+            if (cars.length === 0) return (
+              <div className="empty-state">
+                <p>🚗 No cars in the garage yet.</p>
+                <p>Add your first car using the form above!</p>
+              </div>
+            );
+            return (
             <div className="cars-grid">
               {cars.map(car => (
                 <div key={car.id} className="car-card">
@@ -195,7 +201,8 @@ function App() {
                 </div>
               ))}
             </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>

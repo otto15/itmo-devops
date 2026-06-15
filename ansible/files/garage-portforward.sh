@@ -19,11 +19,12 @@ done
 # forward <namespace|-> <svc> <local:remote>
 forward() {
   local ns="$1" svc="$2" map="$3" nsarg=""
-  [ "$ns" != "-" ] && nsarg="-n $ns"
+  [[ "$ns" != "-" ]] && nsarg="-n $ns"
   while true; do
     $KUBECTL port-forward --address 0.0.0.0 $nsarg "svc/$svc" "$map" 2>/dev/null
     sleep 3   # service/pod gone or restarted — retry
   done
+  return 0
 }
 
 forward monitoring grafana                                     3000:3000 &   # Grafana

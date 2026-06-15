@@ -30,6 +30,8 @@ import java.time.Duration
 class CarControllerIntegrationTest {
 
     companion object {
+        private const val NON_EXISTENT_ID = "/cars/99999"
+
         @Container
         val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
             withDatabaseName("garage_test")
@@ -121,7 +123,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `GET cars by id - returns 404 when not found`() {
-        mockMvc.get("/cars/99999").andExpect {
+        mockMvc.get(NON_EXISTENT_ID).andExpect {
             status { isNotFound() }
         }
     }
@@ -145,7 +147,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `PUT cars by id - returns 404 when car does not exist`() {
-        mockMvc.put("/cars/99999") {
+        mockMvc.put(NON_EXISTENT_ID) {
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(carRequest())
         }.andExpect {
@@ -168,7 +170,7 @@ class CarControllerIntegrationTest {
 
     @Test
     fun `DELETE cars by id - returns 404 when car does not exist`() {
-        mockMvc.delete("/cars/99999").andExpect {
+        mockMvc.delete(NON_EXISTENT_ID).andExpect {
             status { isNotFound() }
         }
     }
