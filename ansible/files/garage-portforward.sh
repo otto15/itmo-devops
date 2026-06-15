@@ -27,9 +27,10 @@ forward() {
   return 0
 }
 
-forward monitoring grafana                                     3000:3000 &   # Grafana
-forward monitoring prometheus                                  9090:9090 &   # Prometheus
-forward garage-app frontend                                    80:80     &   # Frontend web UI
-forward garage-app backend                                     8081:8080 &   # Backend API
+forward monitoring  grafana                                    3000:3000 &   # Grafana
+forward monitoring  prometheus                                 9090:9090 &   # Prometheus
+forward garage-app  frontend                                   80:80     &   # Frontend web UI
+forward garage-app  backend                                    8081:8080 &   # Backend API
+forward argocd      argocd-server                              8443:443  &   # Argo CD UI (https)
 
 wait

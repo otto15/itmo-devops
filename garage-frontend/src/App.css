@@ -88,7 +88,7 @@ body {
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #4c5dd4;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -102,7 +102,7 @@ body {
 }
 
 .btn-secondary {
-  background: #718096;
+  background: #4a5568;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -169,7 +169,7 @@ body {
 }
 
 .btn-edit {
-  background: #48bb78;
+  background: #276749;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -183,7 +183,7 @@ body {
 }
 
 .btn-delete {
-  background: #f56565;
+  background: #c53030;
   color: white;
   border: none;
   padding: 0.5rem 1rem;

@@ -12,39 +12,12 @@
       ignore_errors: true
 
     - name: Start Minikube
-      shell: minikube start --driver=docker --cpus=2 --memory=1800
+      shell: minikube start --driver=docker --cpus=2 --memory=3500
 
     - name: Enable metrics-server (for HPA)
       shell: minikube addons enable metrics-server
 
     # Retries guard against transient TLS/network flakes reaching cr.yandex.
-    - name: Login to Yandex Container Registry (Docker)
-      shell: echo "{{ lookup('env', 'YC_TOKEN') }}" | docker login cr.yandex --username iam --password-stdin
-      register: login_result
-      until: login_result.rc == 0
-      retries: 5
-      delay: 10
-
-    - name: Pull backend image
-      shell: docker pull {{ registry }}/garage-backend:latest
-      register: pull_backend
-      until: pull_backend.rc == 0
-      retries: 5
-      delay: 10
-
-    - name: Pull frontend image
-      shell: docker pull {{ registry }}/garage-frontend:latest
-      register: pull_frontend
-      until: pull_frontend.rc == 0
-      retries: 5
-      delay: 10
-
-    - name: Load backend image into Minikube
-      shell: minikube image load {{ registry }}/garage-backend:latest
-
-    - name: Load frontend image into Minikube
-      shell: minikube image load {{ registry }}/garage-frontend:latest
-
     - name: Create k8s directories on remote
       file:
         path: "/home/devops/k8s/{{ item }}"
@@ -83,6 +56,26 @@
 
     - name: Create application namespace (garage-app)
       shell: minikube kubectl -- apply -f /home/devops/k8s/namespace.yaml
+
+    - name: Create YCR image pull secret
+      shell: |
+        minikube kubectl -- create secret docker-registry ycr-secret \
+          --docker-server=cr.yandex \
+          --docker-username=iam \
+          --docker-password="{{ lookup('env', 'YC_TOKEN') }}" \
+          --namespace garage-app \
+          --dry-run=client -o yaml | minikube kubectl -- apply -f -
+
+    - name: Install Argo CD
+      shell: |
+        minikube kubectl -- create namespace argocd --dry-run=client -o yaml | minikube kubectl -- apply -f -
+        minikube kubectl -- apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+    - name: Wait for Argo CD to be ready
+      shell: minikube kubectl -- rollout status deploy/argocd-server -n argocd --timeout=600s
+
+    - name: Apply Argo CD application
+      shell: minikube kubectl -- apply -f /home/devops/k8s/argocd-app.yaml
 
     - name: Apply database
       shell: minikube kubectl -- apply -f /home/devops/k8s/database/
@@ -152,4 +145,5 @@
           - "  Backend API: http://{{ inventory_hostname }}:8081/cars"
           - "  Grafana:     http://{{ inventory_hostname }}:3000  (admin/admin)"
           - "  Prometheus:  http://{{ inventory_hostname }}:9090"
+          - "  Argo CD:     https://{{ inventory_hostname }}:8443  (admin / see argocd-initial-admin-secret)"
           - "============================================="
