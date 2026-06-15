@@ -95,7 +95,9 @@ tasks.register<Copy>("copyDependencies") {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("integration")
+    }
     finalizedBy(tasks.jacocoTestReport)
 }
 

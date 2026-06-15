@@ -26,7 +26,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests with coverage
-        run: ./gradlew test --tests "com.garage.service.*" jacocoTestReport copyDependencies --build-cache --parallel
+        run: ./gradlew test jacocoTestReport copyDependencies --build-cache --parallel
 
       - name: Upload test report
         if: always()
