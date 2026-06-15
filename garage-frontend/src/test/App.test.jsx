@@ -33,7 +33,7 @@ describe('App', () => {
 
   it('displays empty state when no cars are in garage', async () => {
     render(<App />)
-    
+
     await waitFor(() => {
       expect(screen.getByText(/No cars in the garage yet/i)).toBeInTheDocument()
     })
@@ -44,11 +44,11 @@ describe('App', () => {
       { id: 1, brand: 'Toyota', model: 'Camry', year: 2022, color: 'Red', licensePlate: 'ABC123' },
       { id: 2, brand: 'Honda', model: 'Civic', year: 2021, color: 'Blue', licensePlate: 'XYZ789' }
     ]
-    
+
     carsApi.listCars.mockResolvedValueOnce({ data: mockCars })
-    
+
     render(<App />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Toyota Camry')).toBeInTheDocument()
       expect(screen.getByText('Honda Civic')).toBeInTheDocument()
@@ -61,22 +61,22 @@ describe('App', () => {
     const user = userEvent.setup()
     carsApi.listCars.mockResolvedValue({ data: [] })
     carsApi.createCar.mockResolvedValueOnce({ data: { id: 3 } })
-    
+
     render(<App />)
-    
+
     await waitFor(() => {
       expect(screen.queryByText(/Loading cars/i)).not.toBeInTheDocument()
     })
-    
+
     const currentYear = new Date().getFullYear()
     await user.type(screen.getByPlaceholderText(/Chevrolet/i), 'BMW')
     await user.type(screen.getByPlaceholderText(/Impala/i), 'X5')
     await user.type(screen.getByPlaceholderText(/Black/i), 'Black')
     await user.type(screen.getByPlaceholderText(/AB123CD/i), 'BMW789')
-    
+
     const submitButton = screen.getByRole('button', { name: /Add Car/i })
     await user.click(submitButton)
-    
+
     expect(carsApi.createCar).toHaveBeenCalledWith({
       brand: 'BMW',
       model: 'X5',

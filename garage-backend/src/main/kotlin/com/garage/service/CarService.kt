@@ -33,4 +33,7 @@ class CarService(private val carRepository: CarRepository) {
         if (!carRepository.existsById(id)) throw CarNotFoundException(id)
         carRepository.deleteById(id)
     }
+
+    @Transactional(readOnly = true)
+    fun count(): Long = carRepository.count()
 }
