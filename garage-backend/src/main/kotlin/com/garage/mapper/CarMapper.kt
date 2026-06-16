@@ -22,6 +22,6 @@ class CarMapper {
         model = car.model,
         year = car.year,
         color = car.color,
-        licensePlate = car.licensePlate,
+        licensePlate = "${car.licensePlate}_RU",
     )
 }

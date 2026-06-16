@@ -47,6 +47,6 @@ class CarMapperTest {
         assertEquals("X5", response.model)
         assertEquals(2023, response.year)
         assertEquals("Black", response.color)
-        assertEquals("XY456ZW", response.licensePlate)
+        assertEquals("XY456ZW_RU", response.licensePlate)
     }
 }
