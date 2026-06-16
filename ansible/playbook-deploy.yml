@@ -41,7 +41,7 @@
     - name: Create Grafana dashboard ConfigMap (mounted into Grafana)
       shell: |
         minikube kubectl -- create configmap grafana-dashboard \
-          --from-file=garage.json=/home/devops/k8s/grafana-dashboard.json \
+          --from-file=garage.json=/home/devops/ansible/files/grafana-dashboard.json \
           --namespace monitoring \
           --dry-run=client -o yaml | minikube kubectl -- apply -f -
 
