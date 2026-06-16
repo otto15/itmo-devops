@@ -25,7 +25,7 @@ spec:
         - name: ycr-secret
       containers:
         - name: backend
-          image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:b51d317e083e2a4dd99a66b1ebccbbacd26ee0ff
+          image: cr.yandex/crp73fh09ihdevr61ugo/garage-backend:8aaf6f08bb6d430ae2e3901cbe235e85be79546c
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: docker
