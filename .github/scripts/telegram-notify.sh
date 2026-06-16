@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #   TG_TOKEN, TG_CHAT            - bot token and chat id (from GitHub secrets)
-#   REPO, REF, EVENT, RUN_URL    - GitHub context
+#   REPO, REF, EVENT, ACTOR, RUN_URL - GitHub context (ACTOR = who triggered the run)
 #   BT BB FT FB DP               - job results (success|failure|cancelled|skipped)
 set -euo pipefail
 
 
-msg=$(printf '<b>CI/CD</b> — %s\nBranch: %s -- event: %s\n\n%s Backend - Test\n%s Backend - Build\n%s Frontend - Test\n%s Frontend - Build\n%s Docker - Publish to YCR\n\n<a href="%s">Open CI</a>' \
-  "$REPO" "$REF" "$EVENT" \
+msg=$(printf '<b>CI/CD</b> — %s\nBranch: %s -- event: %s\nTriggered by: %s\n\n%s Backend - Test\n%s Backend - Build\n%s Frontend - Test\n%s Frontend - Build\n%s Docker - Publish to YCR\n\n<a href="%s">Open CI</a>' \
+  "$REPO" "$REF" "$EVENT" "$ACTOR" \
   "$BT" "$BB" "$FT" "$FB" "$DP" \
   "$RUN_URL")
 

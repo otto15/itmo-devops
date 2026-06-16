@@ -247,6 +247,7 @@ jobs:
           REPO: ${{ github.repository }}
           REF: ${{ github.ref_name }}
           EVENT: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           BT: ${{ needs.backend-test.result }}
           BB: ${{ needs.backend-build.result }}
