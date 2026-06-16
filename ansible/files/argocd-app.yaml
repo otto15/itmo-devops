@@ -12,31 +12,14 @@ spec:
   destinations:
     - server: https://kubernetes.default.svc
       namespace: garage-app
-    - server: https://kubernetes.default.svc
-      namespace: argocd
-    - server: https://kubernetes.default.svc
-      namespace: monitoring
 
   clusterResourceWhitelist:
     - group: ''
       kind: Namespace
-    - group: ''
-      kind: ServiceAccount
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRole
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRoleBinding
+
   namespaceResourceWhitelist:
     - group: ''
-      kind: ConfigMap
-    - group: ''
-      kind: Secret
-    - group: ''
       kind: Service
-    - group: ''
-      kind: ServiceAccount
-    - group: ''
-      kind: PersistentVolumeClaim
     - group: apps
       kind: Deployment
     - group: apps
@@ -46,7 +29,6 @@ spec:
 
   orphanedResources:
     warn: true
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
