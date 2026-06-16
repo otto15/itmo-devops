@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-      - 'k8s/backend/deployment.yaml'
-      - 'k8s/frontend/deployment.yaml'
+      - 'k8s/app/backend/deployment.yaml'
+      - 'k8s/app/frontend/deployment.yaml'
   pull_request:
     branches: [ main ]
 
@@ -182,8 +182,8 @@ jobs:
       - name: Update image tags in k8s manifests
         run: |
           SHA_TAG="${GITHUB_SHA}"
-          sed -i "s|garage-backend:.*|garage-backend:${SHA_TAG}|g" k8s/backend/deployment.yaml
-          sed -i "s|garage-frontend:.*|garage-frontend:${SHA_TAG}|g" k8s/frontend/deployment.yaml
+          sed -i "s|garage-backend:.*|garage-backend:${SHA_TAG}|g" k8s/app/backend/deployment.yaml
+          sed -i "s|garage-frontend:.*|garage-frontend:${SHA_TAG}|g" k8s/app/frontend/deployment.yaml
 
       - name: Commit and push manifest changes
         run: |
@@ -193,7 +193,7 @@ jobs:
             echo "Nothing to commit"
             exit 0
           fi
-          git add k8s/backend/deployment.yaml k8s/frontend/deployment.yaml
+          git add k8s/app/backend/deployment.yaml k8s/app/frontend/deployment.yaml
           git commit -m "ci(gitops): bump images to ${GITHUB_SHA}"
           git push
 
