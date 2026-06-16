@@ -9,39 +9,24 @@ data:
       scrape_interval: 15s
 
     scrape_configs:
-      # Prometheus itself
-      - job_name: prometheus
-        static_configs:
-          - targets: ["localhost:9090"]
-
-      # Backend pods in garage-app (discovered by prometheus.io/* annotations).
-      # job="backend" → count(up{job="backend"}) == number of backend replicas.
+      # Backend pods in garage-app (one target per pod, port 8080 from the
+      # container spec). Gives app metrics + up{job="backend"} == replica count.
       - job_name: backend
+        metrics_path: /actuator/prometheus
         kubernetes_sd_configs:
           - role: pod
             namespaces:
               names: [garage-app]
         relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          - source_labels: [__meta_kubernetes_pod_label_app]
             action: keep
-            regex: "true"
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
+            regex: backend
           - source_labels: [__meta_kubernetes_namespace]
-            action: replace
             target_label: namespace
           - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
             target_label: pod
 
-      # Per-pod container metrics from the kubelet's cAdvisor (CPU/memory).
+      # Per-pod CPU/memory from the kubelet cAdvisor (via the API server proxy).
       - job_name: kubelet-cadvisor
         scheme: https
         tls_config:
