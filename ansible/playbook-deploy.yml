@@ -75,7 +75,7 @@
       shell: minikube kubectl -- rollout status deploy/argocd-server -n argocd --timeout=600s
 
     - name: Apply Argo CD application
-      shell: minikube kubectl -- apply -f /home/devops/k8s/argocd-app.yaml
+      shell: minikube kubectl -- apply -f /home/devops/ansible/files/argocd-app.yaml
 
     - name: Apply database
       shell: minikube kubectl -- apply -f /home/devops/k8s/database/
