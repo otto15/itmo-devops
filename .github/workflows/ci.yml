@@ -235,7 +235,7 @@ jobs:
   notify:
     name: Telegram - Notify pipeline status
     runs-on: ubuntu-latest
-    needs: [backend-test, backend-build, frontend-test, frontend-build, docker-publish]
+    needs: [backend-test, backend-build, frontend-test, frontend-build, sonar, docker-publish, bump-image-tag]
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -253,5 +253,7 @@ jobs:
           BB: ${{ needs.backend-build.result }}
           FT: ${{ needs.frontend-test.result }}
           FB: ${{ needs.frontend-build.result }}
+          SN: ${{ needs.sonar.result }}
           DP: ${{ needs.docker-publish.result }}
+          BI: ${{ needs.bump-image-tag.result }}
         run: bash .github/scripts/telegram-notify.sh
