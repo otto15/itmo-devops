@@ -27,7 +27,7 @@ management:
         enabled: true
   metrics:
     tags:
-      application: garage-backend
+      application: garage-backend-v2
     distribution:
       # publish histogram buckets for HTTP timings so Prometheus/Grafana can
       # compute latency percentiles (p90/p95/p99) via histogram_quantile()
