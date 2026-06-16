@@ -10,7 +10,13 @@ msg=$(printf '<b>CI/CD</b> — %s\nBranch: %s -- event: %s\n\n%s Backend - Test\
   "$BT" "$BB" "$FT" "$FB" "$DP" \
   "$RUN_URL")
 
-curl -sS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-  -d chat_id="${TG_CHAT}" \
-  -d parse_mode=HTML \
-  --data-urlencode "text=${msg}"
+# TG_CHAT may hold several ids (comma/space separated): a group/channel id,
+# or a list of personal chats. Send to each so everyone gets notified.
+IFS=', ' read -ra CHATS <<< "$TG_CHAT"
+for chat in "${CHATS[@]}"; do
+  [ -n "$chat" ] || continue
+  curl -sS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+    -d chat_id="${chat}" \
+    -d parse_mode=HTML \
+    --data-urlencode "text=${msg}"
+done
