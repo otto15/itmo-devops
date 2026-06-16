@@ -24,9 +24,11 @@
         state: directory
         owner: devops
       loop:
-        - database
-        - backend
-        - frontend
+        - app
+        - app/backend
+        - app/frontend
+        - app/database
+        - monitoring
 
     - name: Copy Kubernetes manifests
       copy:
@@ -37,6 +39,18 @@
     # --- Monitoring: plain manifests, no Helm (Prometheus + Grafana) ---
     - name: Create monitoring namespace
       shell: minikube kubectl -- create namespace monitoring --dry-run=client -o yaml | minikube kubectl -- apply -f -
+
+    - name: Ensure ansible files directory exists on remote
+      file:
+        path: "/home/devops/ansible/files"
+        state: directory
+        owner: devops
+
+    - name: Copy Grafana dashboard JSON
+      copy:
+        src: "{{ playbook_dir }}/files/grafana-dashboard.json"
+        dest: "/home/devops/ansible/files/grafana-dashboard.json"
+        owner: devops
 
     - name: Create Grafana dashboard ConfigMap (mounted into Grafana)
       shell: |
@@ -55,7 +69,7 @@
       shell: minikube kubectl -- rollout status deploy/grafana -n monitoring --timeout=180s
 
     - name: Create application namespace (garage-app)
-      shell: minikube kubectl -- apply -f /home/devops/k8s/namespace.yaml
+      shell: minikube kubectl -- create namespace garage-app --dry-run=client -o yaml | minikube kubectl -- apply -f -
 
     - name: Create YCR image pull secret
       shell: |
@@ -74,26 +88,14 @@
     - name: Wait for Argo CD to be ready
       shell: minikube kubectl -- rollout status deploy/argocd-server -n argocd --timeout=600s
 
+    - name: Copy Argo CD application manifest
+      copy:
+        src: "{{ playbook_dir }}/files/argocd-app.yaml"
+        dest: "/home/devops/ansible/files/argocd-app.yaml"
+        owner: devops
+
     - name: Apply Argo CD application
       shell: minikube kubectl -- apply -f /home/devops/ansible/files/argocd-app.yaml
-
-    - name: Apply database
-      shell: minikube kubectl -- apply -f /home/devops/k8s/database/
-
-    - name: Wait for database
-      shell: minikube kubectl -- rollout status statefulset/db -n garage-app --timeout=300s
-
-    - name: Apply backend (deployment, service, hpa, ServiceMonitor)
-      shell: minikube kubectl -- apply -f /home/devops/k8s/backend/
-
-    - name: Apply frontend
-      shell: minikube kubectl -- apply -f /home/devops/k8s/frontend/
-
-    - name: Wait for backend rollout
-      shell: minikube kubectl -- rollout status deploy/garage-app-backend -n garage-app --timeout=300s
-
-    - name: Wait for frontend rollout
-      shell: minikube kubectl -- rollout status deploy/garage-app-frontend -n garage-app --timeout=180s
 
     # --- LAN access via systemd-managed port-forward ---
     - name: Install port-forward script

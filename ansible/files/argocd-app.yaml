@@ -19,6 +19,8 @@ spec:
 
   namespaceResourceWhitelist:
     - group: ''
+      kind: ConfigMap
+    - group: ''
       kind: Service
     - group: apps
       kind: Deployment
@@ -43,7 +45,7 @@ spec:
   source:
     repoURL: https://github.com/otto15/itmo-devops.git
     targetRevision: main
-    path: k8s
+    path: k8s/app
 
   destination:
     server: https://kubernetes.default.svc
