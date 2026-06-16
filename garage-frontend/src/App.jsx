@@ -77,7 +77,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🏎️ Garage Management v2</h1>
+        <h1>🏎️ Garage Management</h1>
       </header>
 
       <div className="container">
