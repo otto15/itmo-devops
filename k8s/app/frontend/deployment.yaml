@@ -21,7 +21,7 @@ spec:
         - name: ycr-secret
       containers:
         - name: frontend
-          image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:3a95e95b2b4c2281e02359b8c294d898e201d97f
+          image: cr.yandex/crp73fh09ihdevr61ugo/garage-frontend:a0199d6cfa19696975905f3f596c417daf678920
           ports:
             - containerPort: 80
           resources:
